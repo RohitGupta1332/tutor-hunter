@@ -6,7 +6,7 @@ import { sendVerificationMail } from "../middlewares/email.config.js";
 
 export const signup = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, role } = req.body;
         const user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ message: "User already exists" });
@@ -20,6 +20,7 @@ export const signup = async (req, res) => {
         const newPendingUser = new PendingUser({
             email,
             password: hash,
+            role,
             verificationCode,
             expiresAt
         });
@@ -30,7 +31,7 @@ export const signup = async (req, res) => {
 
         res.status(201).json({ message: "Verification code sent", email: email });
     } catch (error) {
-        res.status(500).json({ message: "Internal server error", error: error });
+        res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
 
@@ -44,12 +45,12 @@ export const verifyEmail = async (req, res) => {
         if (!pendingUser) {
             return res.status(400).json({ message: "Invalid or expired verification code" });
         }
-        const user = new User({
+        const user = await User.create({
             email,
-            password: pendingUser.password
+            password: pendingUser.password,
+            role: pendingUser.role
         });
 
-        await user.save();
         await pendingUser.deleteOne({ email });
 
         const token = generateToken(user);
@@ -60,7 +61,7 @@ export const verifyEmail = async (req, res) => {
         res.status(201).json({ message: "New user added" });
 
     } catch (error) {
-        res.status(500).json({ message: "Internal server error", error: error });
+        res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
 
@@ -82,6 +83,6 @@ export const login = async (req, res) => {
         });
         res.status(200).json({ message: "Logged in successfully" });
     } catch (error) {
-        res.status(500).json({ message: "Internal server error", error: error });
+        res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }

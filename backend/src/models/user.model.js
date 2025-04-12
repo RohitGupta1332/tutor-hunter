@@ -9,6 +9,10 @@ const userSchema = new Schema({
         type: String,
         required: true,
     },
+    role: {
+        type: String,
+        reqruired: true
+    },
     isProfileCreated: {
         type: Boolean,
         default: false
